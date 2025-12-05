@@ -1,0 +1,63 @@
+system:
+  # Hardware & Logging
+  device: "cuda"           # 'cuda' for GPU or 'cpu'
+  log_level: "INFO"        # DEBUG, INFO, WARNING, ERROR
+  cache_dir: "./models_cache" 
+  
+  # Default Engine: Which one loads if you don't specify?
+  # Options: florence2, got_ocr, deepseek, hunyuan, qwen2, qwen3, paddle_vl, easyocr
+  default_engine: "easyocr"
+
+engines:
+  # --- THE BASELINE (Traditional OCR Pipeline) ---
+  easyocr:
+    enabled: true
+    languages: ['en']
+    description: "Traditional CRAFT+ResNet pipeline. Good control variable. No LLM hallucinations."
+    
+  # --- THE GENERALISTS (Fast, Good for Captions/Standard Text) ---
+  florence2:
+    enabled: true
+    repo_id: "microsoft/Florence-2-large"
+    quantization: "float16"
+    description: "Microsoft's VLM. Extremely fast, high accuracy for standard text."
+
+  qwen2:
+    enabled: true
+    repo_id: "Qwen/Qwen2-VL-2B-Instruct"
+    quantization: "float16"
+    description: "Alibaba's 2B model. Great balance of speed and instruction following."
+
+  # --- THE HEAVY HITTERS (SOTA Accuracy, Higher VRAM) ---
+  qwen3:
+    enabled: true
+    repo_id: "Qwen/Qwen3-VL-8B-Instruct"
+    quantization: "float16"
+    description: "The SOTA 8B model. Best reasoning, but slower and requires ~16GB+ VRAM."
+
+  deepseek:
+    enabled: true
+    repo_id: "unsloth/DeepSeek-OCR"
+    quantization: "float16"
+    description: "Specialized 3B model. Excellent for dense text and markdown formatting."
+
+  # --- THE SPECIALISTS (Math, Tables, Formatting) ---
+  got_ocr:
+    enabled: true
+    repo_id: "stepfun-ai/GOT-OCR-2.0-hf"
+    quantization: "float16"
+    description: "Designed for 'OCR 2.0'. Strong at Math (LaTeX) and Sheet Music."
+
+  hunyuan:
+    enabled: true
+    repo_id: "lvyufeng/HunyuanOCR"
+    quantization: "float16"
+    description: "Tencent's 1B model. Strong multilingual and end-to-end parsing."
+
+  paddle_vl:
+    enabled: false
+    repo_id: "lvyufeng/PaddleOCR-VL-0.9B"
+    quantization: "float16"
+    description: "Ultra-compact 0.9B VLM. Excellent for Tables and Charts. (PyTorch Port)"
+
+  

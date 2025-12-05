@@ -1,0 +1,35 @@
+# --- Base Environment (CUDA 12.1 / Torch 2.5+) ---
+# Note: Install Torch manually first if not using the index-url below
+--extra-index-url https://download.pytorch.org/whl/cu121
+torch>=2.5.0
+torchvision
+torchaudio
+
+# --- Hugging Face Ecosystem ---
+transformers>=4.46.0
+accelerate>=0.34.0
+huggingface_hub
+
+# --- Model Specific Dependencies ---
+# Qwen2/3 VL
+qwen-vl-utils
+# Common vision/tensor ops
+timm
+einops
+sentencepiece
+protobuf
+
+# --- Image Processing ---
+pillow
+opencv-python
+numpy
+scipy
+
+# --- EasyOCR Baseline ---
+easyocr
+
+# --- Benchmarking & Scoring ---
+scikit-learn
+
+# --- Utilities ---
+pyyaml

@@ -1,0 +1,35 @@
+# --- Python Boilerplate ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.env
+.venv
+env/
+venv/
+
+# --- Large Models ---
+# Ignore all contents of models_cache...
+models_cache/*
+# ...Except the .gitkeep file (so the folder structure exists)
+!models_cache/.gitkeep
+
+# 2. Local Logs
+logs/
+
+# 3. Benchmark Results & Cache
+benchmark_cache.json
+*_results.txt
+
+# 4. Input/Output Images
+inputs/
+test.jpg
+test2.jpg
+test.txt
+*.png
+*.jpg
+temp/
+
+# 5. IDE Settings
+.vscode/
+.idea/
