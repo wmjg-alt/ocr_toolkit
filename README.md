@@ -2,14 +2,14 @@
 
 A modular Python framework for running, switching, and benchmarking state-of-the-art Vision-Language Models (VLMs) for OCR tasks locally.
 
-This project provides a unified interface to interact with various Transformer-based OCR engines (Florence-2, Qwen-VL, DeepSeek-OCR, etc.) without managing disparate API styles or conflicting dependencies. It operates entirely offline using PyTorch.
+This project provides a unified interface to interact with various Transformer-based OCR engines (Florence-2, Qwen-VL, DeepSeek-OCR, etc.) without managing disparate API styles or conflicting dependencies. After model download, it operates entirely offline using PyTorch.
 
 ## Core Features
 
 1.  **Unified API**: Interact with any model using a standard `reader.read(image)` call. The system handles preprocessing, prompting, and output parsing.
-2.  **Multi-Architecture Support**: Seamless integration of Microsoft, Alibaba, Tencent, DeepSeek, and Paddle Transformers architectures in a single environment.
+2.  **Multi-Architecture Support**: Seamless integration of Microsoft, Alibaba, Tencent, DeepSeek architectures in a single environment.
 3.  **Benchmarking Suite**: A built-in scientific testing rig that compares load times, inference speeds, and accuracy using dual metrics (Structural Precision vs. Content Similarity).
-4.  **Pure PyTorch**: All engines are implemented using standard `transformers` libraries, avoiding C++ dependency conflicts (DLL hell) common with mixed-framework installations.
+4.  **Pure PyTorch**: Most engines are implemented using standard `transformers` libraries, avoiding C++ dependency conflicts (DLL hell) common with mixed-framework installations.
 
 ## Supported Engines
 
@@ -122,7 +122,7 @@ python benchmark.py inputs/test.jpg inputs/ground_truth.txt
 | **Qwen2-VL 2B** | 4.75 | 2.05 | 88.65 | 86.97 |
 | **Qwen3-VL 8B** | 10.81 | 48.65 | 98.04 | **98.56** |
 
-*Note: Qwen3 achieves the highest semantic accuracy but requires significantly more compute resources. Florence-2 offers the best balance of speed vs. structural accuracy.*
+*Note: in our testing Qwen3 achieves the highest semantic accuracy but requires significantly more compute resources. Florence-2 offers the best balance of speed vs. structural accuracy.*
 
 ---
 
