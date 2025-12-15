@@ -34,26 +34,37 @@ class OCR:
     Handles configuration loading, engine switching, and error logging.
     """
 
-    def __init__(self, engine=None, config_path="config.yaml"):
+    def __init__(self, engine=None, config_path="config.yaml", verbose=True):
         """
         Initialize the OCR system.
-        
-        Args:
-            engine (str, optional): Name of the engine to load immediately. 
-                                    If None, loads default from config.
-            config_path (str): Path to the YAML configuration file.
         """
         # 1. Load Configuration
-        if not os.path.exists(config_path):
-            raise FileNotFoundError(f"Config not found at {config_path}")
+        # Resolve config path to absolute to help find relative assets
+        abs_config_path = os.path.abspath(config_path)
+        if not os.path.exists(abs_config_path):
+            raise FileNotFoundError(f"Config not found at {abs_config_path}")
             
-        with open(config_path, 'r') as f:
+        root_dir = os.path.dirname(abs_config_path)
+            
+        with open(abs_config_path, 'r') as f:
             self.config = yaml.safe_load(f)
+            
+        # --- PATH FIX: Resolve relative cache_dir to the tool's directory ---
+        cache_setting = self.config['system'].get('cache_dir', './models_cache')
+        if not os.path.isabs(cache_setting):
+            # Join tool root with relative path
+            self.config['system']['cache_dir'] = os.path.join(root_dir, cache_setting)
+        # --------------------------------------------------------------------
         
         # 2. Setup Logging
-        log_level = getattr(logging, self.config['system'].get('log_level', 'INFO'))
+        cfg_level = self.config['system'].get('log_level', 'INFO')
+        target_level = cfg_level if verbose else "ERROR"
+        
+        log_level = getattr(logging, target_level.upper())
         self.logger = setup_logger(level=log_level)
-        self.logger.info("Initializing OCR System...")
+        
+        if verbose:
+            self.logger.info("Initializing OCR System...")
 
         # 3. Internal State
         self.active_engine = None

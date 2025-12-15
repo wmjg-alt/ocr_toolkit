@@ -7,9 +7,10 @@ This project provides a unified interface to interact with various Transformer-b
 ## Core Features
 
 1.  **Unified API**: Interact with any model using a standard `reader.read(image)` call. The system handles preprocessing, prompting, and output parsing.
-2.  **Multi-Architecture Support**: Seamless integration of Microsoft, Alibaba, Tencent, DeepSeek, and Paddle Transformers architectures in a single environment.
+2.  **Multi-Architecture Support**: Seamless integration of Microsoft, Alibaba, Tencent, DeepSeek, and Paddle architectures in a single environment.
 3.  **Benchmarking Suite**: A built-in scientific testing rig that compares load times, inference speeds, and accuracy using dual metrics (Structural Precision vs. Content Similarity).
-4.  **Pure PyTorch**: All engines are implemented using standard `transformers` libraries, avoiding C++ dependency conflicts (DLL hell) common with mixed-framework installations.
+4.  **Global CLI**: Access the toolkit from any terminal window or external application via a simple `ocr` command.
+5.  **Pure PyTorch**: All engines are implemented using standard `transformers` libraries, avoiding C++ dependency conflicts (DLL hell).
 
 ## Supported Engines
 
@@ -31,86 +32,116 @@ The toolkit includes wrappers for the following models, configured in `config.ya
 ## Installation
 
 ### Prerequisites
-*   Python 3.10 (Recommended for maximum compatibility)
+*   Python 3.10 (Recommended)
 *   NVIDIA GPU with CUDA 12.1+ support
 *   ~20GB Disk Space (ONLY IF you are downloading ALL models)
 
 ### Setup
-1.  **Create Environment**
+1.  **Clone or Create Directory**
+    ```bash
+    mkdir C:\Tools\OCR
+    cd C:\Tools\OCR
+    ```
+
+2.  **Create Environment**
     ```bash
     conda create -n local_ocr python=3.10 -y
     conda activate local_ocr
     ```
 
-2.  **Install Dependencies**
+3.  **Install PyTorch (Crucial Step)**
+    *We must install the CUDA-enabled version explicitly before other dependencies.*
+    ```bash
+    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+    ```
+
+4.  **Install Toolkit Dependencies**
     ```bash
     pip install -r requirements.txt
     ```
 
 ### Alternative: Docker Setup
-If you prefer not to install Python/Conda locally, you can run the entire toolkit in a container.
-
-1.  **Build the Image**
-    ```bash
-    docker build -t local-ocr .
-    ```
-
-2.  **Run with GPU Support**
-    *Requires [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html).*
----
-
-## Use Case 1: OCR Service
-
-Use this as a library to integrate OCR into other local applications.
-
-```python
-import ocr
-
-# 1. Initialize (Loads default engine from config.yaml)
-reader = ocr.OCR()
-
-# 2. Basic Read
-result = reader.read("documents/invoice.jpg")
-print(result['text'])
-
-# 3. Switch Engines at Runtime
-# Switch to Qwen for better reasoning/instruction following
-reader.load_engine("qwen2") 
-result = reader.read("documents/math_homework.jpg", task="formula")
-
-# 4. Access Specific Features
-# Some engines (DeepSeek, Qwen) support specific tasks
-# Options: 'ocr' (default), 'markdown', 'table', 'formula', 'det' (coordinates)
-reader.read("layout.png", task="markdown")
+If you prefer containerization, you can build the image locally.
+```bash
+docker build -t local-ocr .
+# Run with local volume mount to persist downloaded models
+docker run --gpus all -it --rm -v ${PWD}:/app local-ocr
 ```
 
-**Configuration:**
-Edit `config.yaml` to change the default engine, adjust GPU quantization (float16/float32), or modify model paths.
+---
+
+## Use Case 1: Global CLI Tool (System-Wide Access)
+
+You can configure this tool to run from *any* terminal window (PowerShell, CMD, Git Bash) without manually activating Conda environments.
+
+1.  **Edit `ocr.bat`**:
+    Open `ocr.bat` and ensure `PYTHON_EXE` points to your `local_ocr` python path.
+    *(Run `python -c "import sys; print(sys.executable)"` inside your env to find it).*
+
+2.  **Install**:
+    Move `ocr.bat` to a folder in your System PATH (e.g., `C:\Windows\System32` or a custom `C:\Bin`).
+
+3.  **Usage**:
+    Now, from anywhere on your PC:
+    ```powershell
+    # Basic Read (Uses default engine)
+    ocr "C:\Users\Desktop\invoice.png"
+
+    # Save to file
+    ocr image.jpg > output.txt
+
+    # Specific Engine & Task
+    ocr math.jpg --engine qwen2 --task formula
+    ```
 
 ---
 
-## Use Case 2: Benchmarking System
+## Use Case 2: Integration (Call from other Apps)
+
+To use this OCR toolkit inside another Python project (or Node/C# app) **without** installing heavy dependencies in that project, use the Subprocess wrapper pattern.
+
+**Example `ocr_client.py` (Safe to drop in any project):**
+```python
+import subprocess
+import json
+
+OCR_BAT_PATH = "ocr" # Assumes ocr.bat is in PATH
+
+def read_image(image_path, engine=None):
+    cmd = [OCR_BAT_PATH, image_path, "--raw"]
+    if engine:
+        cmd.extend(["--engine", engine])
+    
+    # Run silently
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    
+    if result.returncode == 0:
+        return json.loads(result.stdout) # Returns dict with 'text'
+    else:
+        raise Exception(f"OCR Failed: {result.stderr}")
+
+# Usage
+print(read_image("test.jpg")['text'])
+```
+
+---
+
+## Use Case 3: Benchmarking System
 
 The toolkit includes `benchmark.py` to scientifically compare models against a Ground Truth.
 
-### Comparison Metrics
-OCR accuracy is difficult to quantify with a single number. This suite uses two distinct NLP-minded metrics:
-1.  **Structure % (Levenshtein Distance)**: Measures character-level precision. Penalizes missing newlines, spacing errors, and typos. High scores indicate exact layout reproduction.
-2.  **Content % (Cosine Similarity)**: Measures semantic content (Bag of Words). Does not penalize layout changes. High scores indicate the correct words were found, even if the order was slightly shuffled.
+**Metrics:**
+1.  **Structure % (Levenshtein)**: Measures exact layout/character precision.
+2.  **Content % (Cosine)**: Measures "Bag of Words" semantic accuracy (ignoring layout).
 
-### Running the Benchmark
-You can run the benchmark on any image. Optionally, provide a text file containing the ground truth to generate accuracy scores.
-
+**Run Benchmark:**
 ```bash
-# Option 1: Just run inference and see the output
-python benchmark.py inputs/test.jpg
-
-# Option 2: Run inference and score against a text file
-python benchmark.py inputs/test.jpg inputs/ground_truth.txt
+# Compare all enabled engines on a specific image
+python benchmark.py inputs/test.jpg inputs/truth.txt
 ```
 
-### Example Results
-*Hardware: NVIDIA RTX 4090 | Input: Magic Card (Text + Layout)*
+**Example Results:**
+*Hardware: NVIDIA RTX 3070 | Input: Magic Card (Text + Layout)*
 
 | Model | Load (s) | Infer (s) | Struct % | Content % |
 | :--- | :--- | :--- | :--- | :--- |
@@ -122,26 +153,18 @@ python benchmark.py inputs/test.jpg inputs/ground_truth.txt
 | **Qwen2-VL 2B** | 4.75 | 2.05 | 88.65 | 86.97 |
 | **Qwen3-VL 8B** | 10.81 | 48.65 | 98.04 | **98.56** |
 
-*Note: Qwen3 achieves the highest semantic accuracy but requires significantly more compute resources. Florence-2 offers the best balance of speed vs. structural accuracy.*
-
 ---
-
-## Extensibility
-
-To add a new model:
-1.  **Create Engine**: Add a new file in `engines/` inheriting from `BaseOCREngine`. Implement `load()` and `process()`.
-2.  **Update Config**: Add the model parameters to `config.yaml`.
-3.  **Register**: Add the import switch to `core/factory.py`.
 
 ## Directory Structure
 
 ```text
 C:/Tools/OCR/
-├── config.yaml           # User configuration
-├── ocr.py                # Main interface
-├── benchmark.py          # CLI Benchmarking tool
-├── requirements.txt      # Dependencies
-├── core/                 # System logic (Factory, Scorer, Logger)
-├── engines/              # Model wrappers (Florence, Qwen, etc.)
-└── models_cache/         # Hugging Face model weights (Ignored by git)
+├── config.yaml           # User configuration (Enable/Disable engines here)
+├── ocr.bat               # System Launcher
+├── cli.py                # CLI Entry Point
+├── benchmark.py          # Benchmarking Tool
+├── ocr.py                # Main Python Library
+├── core/                 # System logic
+├── engines/              # Model wrappers
+└── models_cache/         # Hugging Face model weights 
 ```

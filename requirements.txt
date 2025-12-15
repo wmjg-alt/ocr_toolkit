@@ -1,14 +1,10 @@
-# --- Base Environment (CUDA 12.1 / Torch 2.5+) ---
-# Note: Install Torch manually first if not using the index-url below
---extra-index-url https://download.pytorch.org/whl/cu121
-torch>=2.5.0
-torchvision
-torchaudio
+# --- Base Dependencies (Torch installed manually) ---
+# We assume torch>=2.5.0 is already installed via the setup instructions
 
 # --- Hugging Face Ecosystem ---
 transformers>=4.46.0
 accelerate>=0.34.0
-huggingface_hub
+huggingface_hub[hf_xet] 
 
 # --- Model Specific Dependencies ---
 # Qwen2/3 VL
