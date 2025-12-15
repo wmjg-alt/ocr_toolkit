@@ -2,12 +2,12 @@
 
 A modular Python framework for running, switching, and benchmarking state-of-the-art Vision-Language Models (VLMs) for OCR tasks locally.
 
-This project provides a unified interface to interact with various Transformer-based OCR engines (Florence-2, Qwen-VL, DeepSeek-OCR, etc.) without managing disparate API styles or conflicting dependencies. It operates entirely offline using PyTorch.
+This project provides a unified interface to interact with various Transformer-based OCR engines (Florence-2, Qwen-VL, DeepSeek-OCR, etc.) without managing disparate API styles or conflicting dependencies. After model download, it operates entirely offline using PyTorch.
 
 ## Core Features
 
 1.  **Unified API**: Interact with any model using a standard `reader.read(image)` call. The system handles preprocessing, prompting, and output parsing.
-2.  **Multi-Architecture Support**: Seamless integration of Microsoft, Alibaba, Tencent, DeepSeek, and Paddle architectures in a single environment.
+2.  **Multi-Architecture Support**: Seamless integration of Microsoft, Alibaba, Tencent, DeepSeek architectures in a single environment.
 3.  **Benchmarking Suite**: A built-in scientific testing rig that compares load times, inference speeds, and accuracy using dual metrics (Structural Precision vs. Content Similarity).
 4.  **Global CLI**: Access the toolkit from any terminal window or external application via a simple `ocr` command.
 5.  **Pure PyTorch**: All engines are implemented using standard `transformers` libraries, avoiding C++ dependency conflicts (DLL hell).
@@ -154,6 +154,16 @@ python benchmark.py inputs/test.jpg inputs/truth.txt
 | **Qwen3-VL 8B** | 10.81 | 48.65 | 98.04 | **98.56** |
 
 ---
+*Note: in our testing Qwen3 achieves the highest semantic accuracy but requires significantly more compute resources. Florence-2 offers the best balance of speed vs. structural accuracy.*
+
+---
+
+## Extensibility
+
+To add a new model:
+1.  **Create Engine**: Add a new file in `engines/` inheriting from `BaseOCREngine`. Implement `load()` and `process()`.
+2.  **Update Config**: Add the model parameters to `config.yaml`.
+3.  **Register**: Add the import switch to `core/factory.py`.
 
 ## Directory Structure
 
